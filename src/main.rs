@@ -5,6 +5,7 @@ use std::sync::Arc;
 use color_eyre::Result;
 
 use clap::Parser;
+use rcgen::CertifiedKey;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_rustls::rustls::client::{ServerCertVerified, ServerCertVerifier};
 use tokio_rustls::rustls::server::{ClientCertVerified, ClientCertVerifier};
@@ -120,13 +121,13 @@ async fn main() -> Result<()> {
     match args.command {
         Command::Generate => {
             for name in ["server", "client"] {
-                let cert = rcgen::generate_simple_self_signed(vec!["".to_string()])?;
+                let CertifiedKey { cert, signing_key } = rcgen::generate_simple_self_signed(vec!["".to_string()])?;
                 std::fs::create_dir_all("certs")?;
 
-                std::fs::write(format!("certs/{name}_cert.der"), cert.serialize_der()?)?;
+                std::fs::write(format!("certs/{name}_cert.der"), cert.der())?;
                 std::fs::write(
                     format!("certs/{name}_key.der"),
-                    cert.serialize_private_key_der(),
+                    signing_key.serialized_der(),
                 )?;
             }
         }
